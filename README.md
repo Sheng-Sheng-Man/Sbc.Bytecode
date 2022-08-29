@@ -62,8 +62,8 @@ dataSize = GetInteger(new Span<byte>(sir, dataAddr, 4));
 | ---- | ----- | ---- | ---- |
 | 0x00 | 4 | idx | 变量索引号 |
 | 0x04 | 1 | dataType | 数据类型 |
-| 0x05 | 4 | dataLen | 数据长度 |
-| 0x09 | dataLen | data | 数据 |
+| 0x05 | 4 | dataLen | 数据(UTF8)长度 |
+| 0x09 | dataLen | data | 数据(UTF8)，数值同样采用字符串方式存储 |
 
 所有数据定义依次排列存储，数据定义段的实际存储形式为：
 
