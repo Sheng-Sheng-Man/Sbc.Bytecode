@@ -2,7 +2,7 @@
 
 字节码sbc文件是将SIR语言转化为二进制文件存储的对应方案。
 
-## sbc文件组成
+## SIRBC1.2文件组成
 
 1. 文件头标志
 2. 引入定义段(import)
@@ -19,11 +19,11 @@
 | 0x04 | Length | Data | 段数据 |
 
 
-### 文件头标志
+### 1.文件头标志
 
 sbc文件的开始8字节用来定义文件头，由"SIRBC"+三位版本号组成。
 
-### 引入定义段(import)
+### 2.引入定义段(import)
 
 引入定义段的起始位置为固定的0x08，读取4字节为引入定义段全部数据的总长度。
 
@@ -33,7 +33,7 @@ int importSize = 0;
 importSize = GetInteger(new Span<byte>(sir, importAddr, 4));
 ```
 
-引入数据的存储方式如下：
+引入定义的存储方式如下：
 
 | 地址偏移 | 长度 | 名称 | 描述 |
 | ---- | ----- | ---- | ---- |
@@ -41,7 +41,106 @@ importSize = GetInteger(new Span<byte>(sir, importAddr, 4));
 | 0x01 | 4 | contentLen | 内容长度 |
 | 0x05 | contentLen | content | 内容 |
 
-所有引入数据依次排列存储，引入定义段的实际存储形式为：
+所有引入定义依次排列存储，引入定义段的实际存储形式为：
 
-\<段长度\>\[引入数据1\]\[引入数据2\]...\[引入数据n\]
+\<段长度\>\[引入定义1\]\[引入定义2\]...\[引入定义n\]
+
+### 3.数据定义段(data)
+
+数据定义段的起始位置为引入定义段起始位置(importAddr)+4+引入定义段数据长度(importSize)，读取4字节为数据定义段全部数据的总长度。
+
+```
+int dataAddr = 0;
+int dataSize = 0;
+dataAddr = importAddr + importSize + 4;
+dataSize = GetInteger(new Span<byte>(sir, dataAddr, 4));
+```
+
+数据定义的存储方式如下：
+
+| 地址偏移 | 长度 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- |
+| 0x00 | 4 | idx | 变量索引号 |
+| 0x04 | 1 | dataType | 数据类型 |
+| 0x05 | 4 | dataLen | 数据长度 |
+| 0x09 | dataLen | data | 数据 |
+
+所有数据定义依次排列存储，数据定义段的实际存储形式为：
+
+\<段长度\>\[数据定义1\]\[数据定义2\]...\[数据定义n\]
+
+### 4.变量定义段(define)
+
+变量定义段的起始位置为数据定义段起始位置(dataAddr)+4+数据定义段数据长度(dataSize)，读取4字节为变量定义段全部数据的总长度。
+
+```
+int defineAddr = 0;
+int defineSize = 0;
+defineAddr = dataAddr + dataSize + 4;
+defineSize = GetInteger(new Span<byte>(sir, defineAddr, 4));
+```
+
+变量定义的存储方式如下：
+
+| 地址偏移 | 长度 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- |
+| 0x00 | 1 | scopeType | 作用域 |
+| 0x01 | 4 | index | 变量索引号 |
+| 0x05 | 4 | nameLen | 变量名称(UTF8)长度 |
+| 0x09 | nameLen | name | 变量名称(UTF8) |
+
+所有变量定义依次排列存储，变量定义段的实际存储形式为：
+
+\<段长度\>\[变量定义1\]\[变量定义2\]...\[变量定义n\]
+
+### 5.函数定义段(func)
+
+函数定义段的起始位置为变量定义段起始位置(defineAddr)+4+变量定义段数据长度(defineSize)，读取4字节为函数定义段全部数据的总长度。
+
+```
+int funcAddr = 0;
+int funcSize = 0;
+funcAddr = defineAddr + defineSize + 4;
+funcSize = GetInteger(new Span<byte>(sir, funcAddr, 4));
+```
+
+函数定义的存储方式如下：
+
+| 地址偏移 | 长度 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- |
+| 0x00 | 1 | scopeType | 作用域 |
+| 0x01 | 4 | index | 标签索引号 |
+| 0x05 | 4 | nameLen | 函数名称(UTF8)长度 |
+| 0x09 | nameLen | name | 函数名称(UTF8) |
+
+所有函数定义依次排列存储，函数定义段的实际存储形式为：
+
+\<段长度\>\[函数定义1\]\[函数定义2\]...\[函数定义n\]
+
+### 6.代码段(code)
+
+代码段的起始位置为函数定义段起始位置(funcAddr)+4+函数定义段数据长度(funcSize)，读取4字节为代码段全部数据的总长度。
+
+```
+int codeAddr = 0;
+int codeSize = 0;
+codeAddr = funcAddr + funcSize + 4;
+codeSize = GetInteger(new Span<byte>(sir, codeAddr, 4));
+```
+
+指令的存储方式如下：
+
+| 地址偏移 | 长度 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- |
+| 0x00 | 2 | ins | 指令类型 |
+| 0x02 | 1 | exp1Type | 参数1类型 |
+| 0x03 | 4 | exp1Value | 参数1的值 |
+| 0x07 | 1 | exp2Type | 参数2类型 |
+| 0x08 | 4 | exp2Value | 参数2的值 |
+| 0x0C | 1 | exp3Type | 参数3类型 |
+| 0x0D | 4 | exp3Value | 参数3的值 |
+
+所有函数定义依次排列存储，函数定义段的实际存储形式为：
+
+\<段长度\>\[指令1\]\[指令2\]...\[指令n\]
 
