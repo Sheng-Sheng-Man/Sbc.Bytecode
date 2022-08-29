@@ -13,10 +13,10 @@
 
 所有的段信息由4字节长度信息+数据进行存储，即：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 4 | Size | 段长度 |
-| 0x04 | Size | Data | 段数据 |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- | ---- |
+| 0x00 | 4 | int | Size | 段长度 |
+| 0x04 | Size | byte\[Size\] | Data | 段数据 |
 
 
 ### 1.文件头标志
@@ -35,11 +35,11 @@ importSize = GetInteger(new Span<byte>(sir, importAddr, 4));
 
 引入定义的存储方式如下：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 1 | importType | 引入类型 |
-| 0x01 | 4 | contentLen | 内容长度 |
-| 0x05 | contentLen | content | 内容 |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ----- | ---- | ---- |
+| 0x00 | 1 | SirImportTypes | importType | 引入类型 |
+| 0x01 | 4 | int | contentLen | 内容长度 |
+| 0x05 | contentLen | byte\[contentLen\] | content | 内容 |
 
 所有引入定义依次排列存储，引入定义段的实际存储形式为：
 
@@ -58,12 +58,12 @@ dataSize = GetInteger(new Span<byte>(sir, dataAddr, 4));
 
 数据定义的存储方式如下：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 4 | idx | 变量索引号 |
-| 0x04 | 1 | dataType | 数据类型 |
-| 0x05 | 4 | dataLen | 数据(UTF8)长度 |
-| 0x09 | dataLen | data | 数据(UTF8)，数值同样采用字符串方式存储 |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- | ---- |
+| 0x00 | 4 | int | idx | 变量索引号 |
+| 0x04 | 1 | SirDataTypes | dataType | 数据类型 |
+| 0x05 | 4 | int | dataLen | 数据(UTF8)长度 |
+| 0x09 | dataLen | byte\[dataLen\] | data | 数据(UTF8)，数值同样采用字符串方式存储 |
 
 所有数据定义依次排列存储，数据定义段的实际存储形式为：
 
@@ -82,12 +82,12 @@ defineSize = GetInteger(new Span<byte>(sir, defineAddr, 4));
 
 变量定义的存储方式如下：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 1 | scopeType | 作用域 |
-| 0x01 | 4 | index | 变量索引号 |
-| 0x05 | 4 | nameLen | 变量名称(UTF8)长度 |
-| 0x09 | nameLen | name | 变量名称(UTF8) |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- | ---- |
+| 0x00 | 1 | SirScopeTypes | scopeType | 作用域 |
+| 0x01 | 4 | int | index | 变量索引号 |
+| 0x05 | 4 | int | nameLen | 变量名称(UTF8)长度 |
+| 0x09 | nameLen | byte\[nameLen\] | name | 变量名称(UTF8) |
 
 所有变量定义依次排列存储，变量定义段的实际存储形式为：
 
@@ -106,12 +106,12 @@ funcSize = GetInteger(new Span<byte>(sir, funcAddr, 4));
 
 函数定义的存储方式如下：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 1 | scopeType | 作用域 |
-| 0x01 | 4 | index | 标签索引号 |
-| 0x05 | 4 | nameLen | 函数名称(UTF8)长度 |
-| 0x09 | nameLen | name | 函数名称(UTF8) |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- | ---- |
+| 0x00 | 1 | SirScopeTypes | scopeType | 作用域 |
+| 0x01 | 4 | int | index | 标签索引号 |
+| 0x05 | 4 | int | nameLen | 函数名称(UTF8)长度 |
+| 0x09 | nameLen | byte\[nameLen\] | name | 函数名称(UTF8) |
 
 所有函数定义依次排列存储，函数定义段的实际存储形式为：
 
@@ -130,15 +130,15 @@ codeSize = GetInteger(new Span<byte>(sir, codeAddr, 4));
 
 指令的存储方式如下：
 
-| 地址偏移 | 长度 | 名称 | 描述 |
-| ---- | ----- | ---- | ---- |
-| 0x00 | 2 | ins | 指令类型 |
-| 0x02 | 1 | exp1Type | 参数1类型 |
-| 0x03 | 4 | exp1Value | 参数1的值 |
-| 0x07 | 1 | exp2Type | 参数2类型 |
-| 0x08 | 4 | exp2Value | 参数2的值 |
-| 0x0C | 1 | exp3Type | 参数3类型 |
-| 0x0D | 4 | exp3Value | 参数3的值 |
+| 地址偏移 | 长度 | 数据类型 | 名称 | 描述 |
+| ---- | ----- | ---- | ---- | ---- |
+| 0x00 | 2 | SirCodeInstructionTypes | ins | 指令类型 |
+| 0x02 | 1 | SirExpressionTypes | exp1Type | 参数1类型 |
+| 0x03 | 4 | int | exp1Value | 参数1的值 |
+| 0x07 | 1 | SirExpressionTypes | exp2Type | 参数2类型 |
+| 0x08 | 4 | int | exp2Value | 参数2的值 |
+| 0x0C | 1 | SirExpressionTypes | exp3Type | 参数3类型 |
+| 0x0D | 4 | int | exp3Value | 参数3的值 |
 
 所有函数定义依次排列存储，函数定义段的实际存储形式为：
 
